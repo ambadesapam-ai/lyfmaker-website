@@ -1,0 +1,106 @@
+// web/components/VerificationModal.js
+import { useState, useRef, useEffect } from 'react';
+import styles from '../styles/Verification.module.css';
+
+export default function VerificationModal({ userId, onClose }) {
+  const [step, setStep] = useState(1); // 1 = instructions, 2 = capture
+  const [challenge, setChallenge] = useState('');
+  const videoRef = useRef();
+  const canvasRef = useRef();
+  const [error, setError] = useState('');
+
+  const startVerification = async () => {
+    try {
+      // Get verification challenge
+      const res = await fetch('/api/verification/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      
+      const { challengeText } = await res.json();
+      setChallenge(challengeText);
+      setStep(2);
+      
+      // Start camera
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user' },
+        audio: false 
+      });
+      videoRef.current.srcObject = stream;
+      
+    } catch (err) {
+      setError('Could not access camera. Please enable permissions.');
+    }
+  };
+
+  const captureSelfie = async () => {
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    
+    // Draw current frame to canvas
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    
+    // Convert to base64
+    const selfieImage = canvas.toDataURL('image/jpeg');
+    
+    // Submit for verification
+    const res = await fetch('/api/verification/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        userId,
+        selfieImage,
+        challengeText: challenge 
+      })
+    });
+    
+    const result = await res.json();
+    if (result.success) {
+      onClose(true); // Verification succeeded
+    } else {
+      setError('Verification failed. Please try again.');
+      setStep(1);
+    }
+    
+    // Stop camera
+    video.srcObject.getTracks().forEach(track => track.stop());
+  };
+
+  return (
+    <div className={styles.modal}>
+      {step === 1 ? (
+        <div className={styles.step}>
+          <h2>Verify Your Profile</h2>
+          <p>Get a "Verified" badge by completing live selfie verification</p>
+          <ul className={styles.instructions}>
+            <li>Good lighting required</li>
+            <li>No sunglasses or face coverings</li>
+            <li>You'll be asked to perform a simple action</li>
+          </ul>
+          <button onClick={startVerification} className={styles.button}>
+            Start Verification
+          </button>
+        </div>
+      ) : (
+        <div className={styles.step}>
+          <h2>Perform This Action: {challenge}</h2>
+          <div className={styles.cameraContainer}>
+            <video ref={videoRef} autoPlay playsInline className={styles.video} />
+            <canvas ref={canvasRef} style={{ display: 'none' }} />
+          </div>
+          <button onClick={captureSelfie} className={styles.button}>
+            Capture Selfie
+          </button>
+        </div>
+      )}
+      
+      {error && <p className={styles.error}>{error}</p>}
+      <button onClick={() => onClose(false)} className={styles.cancelButton}>
+        Skip Verification
+      </button>
+    </div>
+  );
+}
