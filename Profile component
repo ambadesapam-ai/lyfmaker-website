@@ -1,0 +1,18 @@
+// web/components/UserProfile.js
+export default function UserProfile({ user }) {
+  return (
+    <div className={styles.profile}>
+      <div className={styles.header}>
+        <h2>{user.name} {user.verificationBadge && (
+          <span className={styles.badge}>
+            {user.verificationBadge}
+            {user.verificationBadge === 'Verified' && (
+              <svg className={styles.badgeIcon} /* checkmark icon */ />
+            )}
+          </span>
+        )}</h2>
+      </div>
+      {/* ... rest of profile */}
+    </div>
+  );
+}
