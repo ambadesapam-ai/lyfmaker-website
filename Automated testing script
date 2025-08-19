@@ -1,0 +1,37 @@
+// backend/tests/auth.test.js
+const request = require('supertest');
+const app = require('../server');
+const User = require('../models/User');
+
+describe('Auth System', () => {
+  beforeAll(async () => {
+    await User.deleteMany({});
+  });
+  
+  test('Register new user', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({
+        name: 'Test User',
+        email: 'test@example.com',
+        password: 'password123',
+        gender: 'Male',
+        dob: '1990-01-01'
+      });
+      
+    expect(res.statusCode).toEqual(201);
+    expect(res.body).toHaveProperty('token');
+  });
+  
+  test('Login existing user', async () => {
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({
+        email: 'test@example.com',
+        password: 'password123'
+      });
+      
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('token');
+  });
+});
