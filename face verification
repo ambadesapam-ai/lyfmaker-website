@@ -1,0 +1,32 @@
+// backend/ai/faceVerification.js
+const axios = require('axios');
+
+// Mock integration with Face++ or AWS Rekognition
+async function verifyFace({ profilePhotos, selfieImage, challengeText }) {
+  // In production, replace with actual API calls:
+  // 1. AWS Rekognition: compare_faces API
+  // 2. Face++: compare API
+  // 3. Microsoft Face API
+  
+  try {
+    // Example using mock service
+    const response = await axios.post('https://api.face-verification.com/compare', {
+      reference_images: profilePhotos,
+      selfie_image: selfieImage,
+      liveness_check: challengeText 
+    }, {
+      headers: { 'Authorization': `Bearer ${process.env.AI_VERIFICATION_KEY}` }
+    });
+    
+    return {
+      isVerified: response.data.match,
+      confidence: response.data.confidence
+    };
+    
+  } catch (error) {
+    console.error('AI Verification Error:', error);
+    return { isVerified: false, confidence: 0 };
+  }
+}
+
+module.exports = { verifyFace };
