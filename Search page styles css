@@ -1,0 +1,49 @@
+/* web/styles/Search.module.css */
+.container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.filters {
+  width: 300px;
+  padding: 2rem;
+  background-color: white;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.filters h2 {
+  margin-bottom: 1.5rem;
+  color: var(--secondary);
+}
+
+.filters select,
+.filters input[type="text"] {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.ageRange {
+  margin-bottom: 1.5rem;
+}
+
+.ageRange label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.ageRange input[type="range"] {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.results {
+  flex: 1;
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
