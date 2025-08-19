@@ -1,0 +1,124 @@
+// web/components/VideoCall.js
+import { useState, useEffect, useRef } from 'react';
+import io from 'socket.io-client';
+import styles from '../styles/VideoCall.module.css';
+
+export default function VideoCall({ callId, callerId, recipientId }) {
+  const [callStarted, setCallStarted] = useState(false);
+  const [remoteStream, setRemoteStream] = useState(null);
+  const localVideoRef = useRef();
+  const remoteVideoRef = useRef();
+  const socket = useRef();
+  const peerConnection = useRef();
+
+  useEffect(() => {
+    // Initialize socket
+    socket.current = io(process.env.NEXT_PUBLIC_SOCKET_URL);
+    
+    // Initialize WebRTC
+    const initWebRTC = async () => {
+      try {
+        // Get local stream
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: true, 
+          audio: true 
+        });
+        localVideoRef.current.srcObject = stream;
+        
+        // Create peer connection
+        peerConnection.current = new RTCPeerConnection({
+          iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        });
+        
+        // Add local stream
+        stream.getTracks().forEach(track => {
+          peerConnection.current.addTrack(track, stream);
+        });
+        
+        // Handle remote stream
+        peerConnection.current.ontrack = (event) => {
+          setRemoteStream(event.streams[0]);
+        };
+        
+        // ICE candidate handling
+        peerConnection.current.onicecandidate = (event) => {
+          if (event.candidate) {
+            socket.current.emit('signal', { 
+              callId, 
+              signal: { candidate: event.candidate } 
+            });
+          }
+        };
+        
+        // Join call room
+        socket.current.emit('join-call', callId);
+        
+        // Listen for signals
+        socket.current.on('signal', (signal) => {
+          if (signal.sdp) {
+            peerConnection.current.setRemoteDescription(
+              new RTCSessionDescription(signal.sdp)
+            );
+          } else if (signal.candidate) {
+            peerConnection.current.addIceCandidate(
+              new RTCIceCandidate(signal.candidate)
+            );
+          }
+        });
+        
+      } catch (error) {
+        console.error('Error initializing call:', error);
+      }
+    };
+    
+    initWebRTC();
+    
+    return () => {
+      if (socket.current) socket.current.disconnect();
+      if (peerConnection.current) peerConnection.current.close();
+    };
+  }, [callId]);
+  
+  const startCall = async () => {
+    try {
+      const offer = await peerConnection.current.createOffer();
+      await peerConnection.current.setLocalDescription(offer);
+      
+      socket.current.emit('signal', { 
+        callId, 
+        signal: { sdp: peerConnection.current.localDescription } 
+      });
+      
+      setCallStarted(true);
+    } catch (error) {
+      console.error('Error starting call:', error);
+    }
+  };
+  
+  return (
+    <div className={styles.container}>
+      <div className={styles.videoContainer}>
+        <video 
+          ref={localVideoRef} 
+          autoPlay 
+          muted 
+          className={styles.localVideo}
+        />
+        {remoteStream && (
+          <video 
+            ref={remoteVideoRef} 
+            srcObject={remoteStream} 
+            autoPlay 
+            className={styles.remoteVideo}
+          />
+        )}
+      </div>
+      
+      {!callStarted && (
+        <button onClick={startCall} className={styles.callButton}>
+          Start Video Call
+        </button>
+      )}
+    </div>
+  );
+}
