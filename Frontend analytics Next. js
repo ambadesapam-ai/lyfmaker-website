@@ -1,0 +1,27 @@
+// web/lib/analytics.js
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
+import * as analytics from '../utils/analytics';
+
+export function useAnalytics() {
+  const router = useRouter();
+  
+  useEffect(() => {
+    const handleRouteChange = (url) => {
+      analytics.pageview(url);
+    };
+    
+    router.events.on('routeChangeComplete', handleRouteChange);
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router.events]);
+}
+
+// Track button clicks
+export function trackButtonClick(buttonName) {
+  window.analytics.track('Button Clicked', {
+    button: buttonName,
+    page: window.location.pathname
+  });
+}
