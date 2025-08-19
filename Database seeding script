@@ -1,0 +1,92 @@
+// backend/seed.js
+const mongoose = require('mongoose');
+const User = require('./models/User');
+const bcrypt = require('bcryptjs');
+
+// Connect to DB
+mongoose.connect('mongodb://localhost:27017/lyfmaker', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
+
+// Sample data
+const religions = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Buddhist'];
+const castes = {
+  Hindu: ['Brahmin', 'Kshatriya', 'Vaishya', 'Shudra'],
+  Muslim: ['Syed', 'Mughal', 'Pathan', 'Sheikh'],
+  Christian: ['Catholic', 'Protestant', 'Orthodox'],
+  Sikh: ['Jat', 'Khatri', 'Arora'],
+  Buddhist: ['Mahayana', 'Theravada', 'Vajrayana']
+};
+const professions = [
+  'Doctor', 'Engineer', 'Teacher', 'Business', 
+  'Artist', 'Lawyer', 'CA', 'Government Job'
+];
+
+async function seedDB() {
+  try {
+    await User.deleteMany();
+    console.log('Database cleared');
+    
+    // Create admin user
+    const admin = new User({
+      name: 'Admin',
+      email: 'admin@lyfmaker.com',
+      password: await bcrypt.hash('admin123', 12),
+      gender: 'Male',
+      dob: new Date(1985, 0, 1),
+      religion: 'Hindu',
+      caste: 'Brahmin',
+      profession: 'Business',
+      income: 1000000,
+      verified: true,
+      premium: true
+    });
+    await admin.save();
+    
+    // Create 50 sample profiles
+    for (let i = 1; i <= 50; i++) {
+      const gender = Math.random() > 0.5 ? 'Male' : 'Female';
+      const religion = religions[Math.floor(Math.random() * religions.length)];
+      const caste = castes[religion][Math.floor(Math.random() * castes[religion].length)];
+      
+      const user = new User({
+        name: gender === 'Male' ? 
+          `Male User ${i}` : `Female User ${i}`,
+        email: `user${i}@example.com`,
+        password: await bcrypt.hash('password123', 12),
+        gender,
+        dob: new Date(1990 + Math.floor(Math.random() * 15), 
+                     Math.floor(Math.random() * 12), 
+                     Math.floor(Math.random() * 28)),
+        religion,
+        caste,
+        profession: professions[Math.floor(Math.random() * professions.length)],
+        income: Math.floor(Math.random() * 1000000),
+        photos: [
+          `https://randomuser.me/api/portraits/${gender.toLowerCase()}/${i}.jpg`
+        ],
+        bio: `This is a sample bio for user ${i}. Looking for a compatible partner.`,
+        preferences: {
+          minAge: 25,
+          maxAge: 35,
+          preferredReligion: religion,
+          preferredLocation: ['Delhi', 'Mumbai', 'Bangalore'][Math.floor(Math.random() * 3)]
+        },
+        verified: Math.random() > 0.3,
+        premium: Math.random() > 0.7
+      });
+      
+      await user.save();
+    }
+    
+    console.log('Database seeded successfully');
+    process.exit(0);
+    
+  } catch (error) {
+    console.error('Error seeding database:', error);
+    process.exit(1);
+  }
+}
+
+seedDB();
