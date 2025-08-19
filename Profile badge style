@@ -1,0 +1,19 @@
+/* Profile badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #e6f7ff;
+  color: #1890ff;
+  margin-left: 0.5rem;
+}
+
+.badgeIcon {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
