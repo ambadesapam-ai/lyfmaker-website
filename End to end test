@@ -1,0 +1,17 @@
+// web/cypress/e2e/register.cy.js
+describe('User Registration', () => {
+  it('successfully registers new user', () => {
+    cy.visit('/register');
+    
+    cy.get('input[name="name"]').type('Test User');
+    cy.get('input[name="email"]').type('test@example.com');
+    cy.get('input[name="password"]').type('password123');
+    cy.get('select[name="gender"]').select('Male');
+    cy.get('input[name="dob"]').type('1990-01-01');
+    
+    cy.get('button[type="submit"]').click();
+    
+    cy.url().should('include', '/dashboard');
+    cy.contains('Welcome, Test User');
+  });
+});
