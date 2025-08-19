@@ -1,0 +1,22 @@
+// web/tests/ProfileCard.test.js
+import { render, screen } from '@testing-library/react';
+import ProfileCard from '../components/ProfileCard';
+
+const mockProfile = {
+  name: 'John Doe',
+  dob: '1990-01-01',
+  profession: 'Software Engineer',
+  religion: 'Hindu',
+  caste: 'Brahmin',
+  education: 'M.Tech',
+  photos: ['/test.jpg']
+};
+
+test('renders profile card with correct info', () => {
+  render(<ProfileCard profile={mockProfile} />);
+  
+  expect(screen.getByText('John Doe, 33')).toBeInTheDocument();
+  expect(screen.getByText('Software Engineer')).toBeInTheDocument();
+  expect(screen.getByText('Hindu | Brahmin')).toBeInTheDocument();
+  expect(screen.getByText('Show Interest')).toBeInTheDocument();
+});
