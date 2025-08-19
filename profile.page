@@ -1,0 +1,19 @@
+import { GetServerSideProps } from 'next';
+import MainLayout from '../../components/layout/MainLayout';
+import ProfileView from '../../components/profile/ProfileView';
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { id } = context.params!;
+  const res = await fetch(`${process.env.API_URL}/profiles/${id}`);
+  const profile = await res.json();
+
+  return { props: { profile } };
+};
+
+export default function ProfilePage({ profile }) {
+  return (
+    <MainLayout title={`${profile.name} | LyfMaker`}>
+      <ProfileView profile={profile} />
+    </MainLayout>
+  );
+}
