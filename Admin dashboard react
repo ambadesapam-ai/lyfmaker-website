@@ -1,0 +1,74 @@
+// web/pages/admin/dashboard.js
+import { useState, useEffect } from 'react';
+import AdminLayout from '../../components/AdminLayout';
+import styles from '../../styles/Admin.module.css';
+
+export default function AdminDashboard() {
+  const [stats, setStats] = useState(null);
+  const [recentUsers, setRecentUsers] = useState([]);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      const [statsRes, usersRes] = await Promise.all([
+        fetch('/api/admin/stats'),
+        fetch('/api/admin/users?limit=5')
+      ]);
+      
+      setStats(await statsRes.json());
+      setRecentUsers(await usersRes.json());
+    };
+    
+    fetchData();
+  }, []);
+  
+  return (
+    <AdminLayout>
+      <div className={styles.grid}>
+        <div className={styles.card}>
+          <h3>Total Users</h3>
+          <p>{stats?.totalUsers || 0}</p>
+        </div>
+        
+        <div className={styles.card}>
+          <h3>Premium Users</h3>
+          <p>{stats?.premiumUsers || 0}</p>
+        </div>
+        
+        <div className={styles.card}>
+          <h3>Video Calls (7d)</h3>
+          <p>{stats?.recentCalls || 0}</p>
+        </div>
+      </div>
+      
+      <div className={styles.section}>
+        <h2>Recent Signups</h2>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Joined</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {recentUsers.map(user => (
+              <tr key={user._id}>
+                <td>{user.name}</td>
+                <td>{user.email}</td>
+                <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                <td>
+                  <span className={`${styles.badge} ${
+                    user.premium ? styles.premium : styles.free
+                  }`}>
+                    {user.premium ? 'Premium' : 'Free'}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </AdminLayout>
+  );
+}
