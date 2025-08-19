@@ -1,0 +1,11 @@
+// In User model
+const userSchema = new mongoose.Schema({
+  // ... existing fields
+  verificationStatus: {
+    type: String,
+    enum: ['unverified', 'pending', 'verified'],
+    default: 'unverified'
+  },
+  verificationBadge: String,
+  verificationDate: Date
+});
