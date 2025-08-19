@@ -1,0 +1,39 @@
+// backend/routes/video.js
+const express = require('express');
+const router = express.Router();
+const User = require('../models/User');
+const { v4: uuidv4 } = require('uuid');
+
+// Verify user can initiate call (paid & matched)
+router.post('/initiate', async (req, res) => {
+  const { callerId, recipientId } = req.body;
+  
+  try {
+    // Check if paid user
+    const caller = await User.findById(callerId);
+    if (!caller.premium) {
+      return res.status(403).json({ error: 'Premium feature required' });
+    }
+    
+    // Check if matched (simplified example)
+    const isMatched = await Match.exists({
+      $or: [
+        { user1: callerId, user2: recipientId },
+        { user1: recipientId, user2: callerId }
+      ]
+    });
+    
+    if (!isMatched) {
+      return res.status(403).json({ error: 'Can only call matched profiles' });
+    }
+    
+    // Create call session
+    const callId = uuidv4();
+    res.json({ callId });
+    
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+module.exports = router;
