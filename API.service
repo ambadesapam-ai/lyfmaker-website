@@ -1,0 +1,29 @@
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+export const api = {
+  // Profile endpoints
+  getProfile: async (id: string) => {
+    const res = await fetch(`${API_URL}/profiles/${id}`);
+    return await res.json();
+  },
+
+  // Authentication endpoints
+  login: async (email: string, password: string) => {
+    const res = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    return await res.json();
+  },
+
+  // Chat endpoints
+  sendMessage: async (userId: string, message: string) => {
+    const res = await fetch(`${API_URL}/chat/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, message })
+    });
+    return await res.json();
+  }
+};
