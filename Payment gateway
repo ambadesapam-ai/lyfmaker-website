@@ -1,0 +1,63 @@
+// backend/routes/payment.js
+const express = require('express');
+const crypto = require('crypto');
+const router = express.Router();
+const User = require('../models/User');
+
+// Initialize Razorpay
+const Razorpay = require('razorpay');
+const rzp = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET
+});
+
+// Create Order
+router.post('/create-order', async (req, res) => {
+  try {
+    const { userId, planId } = req.body;
+    
+    const options = {
+      amount: 299900, // ₹2999.00 in paise
+      currency: "INR",
+      receipt: `order_${userId}_${Date.now()}`,
+      payment_capture: 1,
+      notes: {
+        userId,
+        planId
+      }
+    };
+    
+    const order = await rzp.orders.create(options);
+    
+    res.json({
+      id: order.id,
+      currency: order.currency,
+      amount: order.amount
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Verify Payment Webhook
+router.post('/verify-payment', async (req, res) => {
+  const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
+  
+  const generatedSignature = crypto
+    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+    .digest('hex');
+    
+  if (generatedSignature === razorpay_signature) {
+    // Payment successful - update user premium status
+    const userId = req.body.notes.userId;
+    await User.findByIdAndUpdate(userId, { premium: true });
+    
+    res.json({ success: true });
+  } else {
+    res.status(400).json({ success: false });
+  }
+});
+
+module.exports = router;
