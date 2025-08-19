@@ -1,0 +1,20 @@
+// Example usage in routes
+router.post('/register', async (req, res) => {
+  try {
+    // ... registration logic
+    analytics.track('User Registered', user._id, {
+      plan: 'free',
+      referral: req.body.referralCode
+    });
+  } catch (error) { /* ... */ }
+});
+
+// Track video calls
+router.post('/video/initiate', async (req, res) => {
+  // ... verification logic
+  analytics.track('Video Call Started', callerId, {
+    recipientId,
+    callDuration: 0,
+    premiumTier: caller.premiumTier
+  });
+});
