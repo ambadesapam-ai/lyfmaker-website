@@ -1,0 +1,64 @@
+// backend/routes/verification.js
+const express = require('express');
+const router = express.Router();
+const User = require('../models/User');
+const { verifyFace } = require('../ai/faceVerification');
+const { v4: uuidv4 } = require('uuid');
+
+// Initiate verification
+router.post('/start', async (req, res) => {
+  const { userId } = req.body;
+  
+  try {
+    const verificationId = uuidv4();
+    res.json({ 
+      verificationId,
+      challengeText: `Please hold your ${Math.floor(Math.random() * 5) + 1} fingers up`
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Process verification
+router.post('/verify', async (req, res) => {
+  const { userId, verificationId, selfieImage, challengeText } = req.body;
+  
+  try {
+    const user = await User.findById(userId);
+    
+    // 1. Check if user has profile photos
+    if (!user.photos || user.photos.length === 0) {
+      return res.status(400).json({ error: 'Upload profile photos first' });
+    }
+    
+    // 2. Call AI verification service
+    const { isVerified, confidence } = await verifyFace({
+      profilePhotos: user.photos,
+      selfieImage,
+      challengeText 
+    });
+    
+    // 3. Update user verification status
+    if (isVerified && confidence > 0.85) {
+      user.verified = true;
+      user.verificationBadge = "Verified";
+      await user.save();
+      
+      return res.json({ 
+        success: true,
+        message: 'Profile verified successfully!'
+      });
+    } else {
+      return res.json({ 
+        success: false,
+        message: 'Verification failed. Please try again.'
+      });
+    }
+    
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+module.exports = router;
